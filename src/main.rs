@@ -1,11 +1,10 @@
-use database::list;
 use tabled::{Style, Table};
 use unqlite::UnQLite;
 
 #[allow(unused)]
 use clap::{Parser, Subcommand};
 
-use crate::database::{create, delete, read, Entry};
+use crate::database::{create, delete, filter, list, read, Entry};
 use crate::utils::random_pass;
 
 mod database;
@@ -14,6 +13,10 @@ mod utils;
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]
 struct Cli {
+    /// Domain to search
+    #[clap(value_parser)]
+    domain: Option<String>,
+
     /// Subcommands
     #[clap(subcommand)]
     command: Option<Commands>,
@@ -63,38 +66,51 @@ fn main() {
     // Parsing Cli commands
     let cli = Cli::parse();
 
-    let table: Vec<Entry> = match &cli.command {
-        Some(Commands::Ls {}) => {
-            list(unqlite)
+    let table: Vec<Entry> = if let Some(domain) = cli.domain.as_deref() {
+        println!("Searching for domain: {}", domain);
+        filter(String::from(domain), unqlite)
+    } else {
+        match &cli.command {
+            Some(Commands::Ls {}) => {
+                println!("LS");
+                list(unqlite)
+            }
+
+            Some(Commands::Add { domain, user, pass }) => {
+                println!("ADD");
+
+                let pass: String = match pass {
+                    Some(p) => p.to_owned(),
+                    None => {
+                        println!("Creating entry with random password");
+                        random_pass()
+                    }
+                };
+                let key = String::from(domain);
+                let e = Entry {
+                    domain: key.clone(),
+                    user: String::from(user),
+                    pass,
+                };
+
+                create(key, e, unqlite)
+            }
+
+            Some(Commands::Read { domain }) => {
+                println!("READ");
+                read(String::from(domain), unqlite)
+            }
+
+            Some(Commands::Rm { domain }) => {
+                println!("RM");
+                delete(String::from(domain), unqlite)
+            }
+
+            None => {
+                println!("NONE");
+                list(unqlite)
+            }
         }
-
-        Some(Commands::Add { domain, user, pass }) => {
-            let pass: String = match pass {
-                Some(p) => p.to_owned(),
-                None => {
-                    println!("Creating entry with random password");
-                    random_pass()
-                }
-            };
-            let key = String::from(domain);
-            let e = Entry {
-                domain: key.clone(),
-                user: String::from(user),
-                pass,
-            };
-
-            create(key, e, unqlite)
-        }
-
-        Some(Commands::Read { domain }) => {
-            read(String::from(domain), unqlite)
-        }
-
-        Some(Commands::Rm { domain }) => {
-            delete(String::from(domain), unqlite)
-        }
-
-        None => vec![Entry{domain: String::from(""), user: String::from(""), pass: String::from("")}]
     };
 
     println!("{}", Table::new(table).with(Style::modern()));

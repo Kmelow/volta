@@ -1,22 +1,27 @@
 use rand::Rng;
-// use serde::Serialize;
 
-// pub fn stringify<T: Serialize> (o: T) -> String {
-//     let json = serde_json::to_string(&o);
-//     match json {
-//         Ok(j) => j,
-//         _ => String::from("Error")
-//     }
-// }
+use clipboard::ClipboardContext;
+use clipboard::ClipboardProvider;
 
-// pub fn parse<T: Deserialize> (s: String, o: T) -> T {
-//     let s = serde_json::from_str(&s);
-//     match s {
-//         Ok(obj) => obj,
-//         _ => o
-//     }
-// }
+/// clip is a wrapper arround the [clipboard](https://lib.rs/crates/clipboard) crate
+/// that sets the passed word to the clipboard
+pub fn clip(w: String) {
+    let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+    ctx.set_contents(w).unwrap();
+}
 
+/// mask_pass returns the word in the argument displaying the first `unmasked` characters
+/// the rest is replaced by 5 "*"
+pub fn mask_pass(p: String, unmasked: Option<usize>) -> String {
+    let un = unmasked.unwrap_or(3);
+    if un > p.len() {
+        p
+    } else {
+        p[0..un].to_string() + &vec!['*'; 5].iter().collect::<String>()
+    }
+}
+
+/// random_pass is a very **unsecure** and **naive** way to generate a random passwod
 pub fn random_pass() -> String {
     const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
                             abcdefghijklmnopqrstuvwxyz\

@@ -107,7 +107,6 @@ fn main() {
             }
 
             None => {
-                println!("NONE");
                 list(unqlite)
             }
         }

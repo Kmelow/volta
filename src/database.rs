@@ -1,9 +1,9 @@
+use crate::utils::{clip, mask_pass};
+use owo_colors::{OwoColorize, Style};
 use serde::{Deserialize, Serialize};
 use slug::slugify;
 use tabled::Tabled;
 use unqlite::{Cursor, UnQLite, KV};
-use crate::utils::{clip, mask_pass};
-use owo_colors::{OwoColorize, Style};
 
 #[derive(Serialize, Deserialize, Tabled, Debug)]
 pub struct Entry {
@@ -80,16 +80,17 @@ fn filter_list(subs: Option<String>, db: UnQLite) -> Vec<Entry> {
         entry = record.next();
     }
 
-    let style = Style::new()
-        .green()
-        .bold();
-    
+    let style = Style::new().green().bold();
+
     if entries.len() == 1 {
         let clipped_pass = mask_pass(entries[0].pass[0..4].to_string(), Some(4));
-        println!("{} {}", "Copied password to clipboard 📋".style(style), clipped_pass);
+        println!(
+            "{} {}",
+            "Copied password to clipboard 📋".style(style),
+            clipped_pass
+        );
         clip(entries[0].pass.clone())
     }
 
     entries
 }
-

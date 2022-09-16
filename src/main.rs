@@ -106,9 +106,7 @@ fn main() {
                 delete(String::from(domain), unqlite)
             }
 
-            None => {
-                list(unqlite)
-            }
+            None => list(unqlite),
         }
     };
 
